@@ -2,6 +2,25 @@
 
 The dashboard belongs to no app, so its work has no queue ID. Each version gets its own **Render** (scope approved) and **Build** (go-ahead), recorded here, newest first.
 
+## Next version · Build receipts
+
+**Render:** 3 Nov 2026, 18:38. Ivan: "Go ahead with both of them, render", for part B of the Blueprint (Ivan's project note `build_receipts_blueprint.md`) with every *Default if unanswered*. Part A (his `ivan-app-style` skill) has its own Build outside this repo.
+**Build:** awaiting. The version is settled when it lands: 1.2.0 if it ships before *1.2 · Run together* (Blueprint, not yet rendered), otherwise 1.3.0.
+
+**Goal:** every queue Build leaves a receipt of what it cost, and each app card shows them, so guesses at Render can be checked against what builds really took.
+
+**Agreed**
+1. A `BUILD_RECEIPTS.md` in each app's repo (and in kit repos for kit builds): a table, newest first: Date · Item · Version · Guess · Real · Steps · Written · Re-read · Full test runs · Biggest share.
+2. No past builds counted. The first row is Vocal Sessions Q40 (measured in its build); the rest start with the next Build.
+3. The page reads it live, like `CHANGELOG.md`; a missing file means "no receipts yet", never a warning.
+4. Each app card gets a Receipts part, collapsed like Shipped: the latest receipt drawn in the receipt style, earlier ones one line each, and a tally (on the money · went over · came in under).
+5. Starting files: Vocal Sessions with Q40's row; Suki empty with its header. Documentation-only commits, no app versions.
+6. Named parts `receipts`, `receipt-latest`, `receipt-row`, `receipt-tally`; no new saved data; screenshot checks as 1.1.
+
+**Out of scope:** counting past builds, cost in money, charts over time, any queue item's status or scope, app code and versions.
+
+**Done when:** Vocal Sessions' card shows Q40's receipt and a tally of 1 on the money; Suki shows "No receipts yet"; nothing else changes; live on Pages.
+
 ## 1.1.0 · Release order
 
 **Render:** 3 Nov 2026, 13:30. Ivan: "Render", for the Blueprint (Ivan's project note `render_queues_1_1_release_order_blueprint.md`) exactly as written, with all ten defaults, as one Build in the order below.
