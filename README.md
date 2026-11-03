@@ -1,8 +1,8 @@
 # Render queues
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 
-**Current version:** 1.0.0 · see the [changelog](CHANGELOG.md).
+**Current version:** 1.1.0 · see the [changelog](CHANGELOG.md).
 
 One page that shows, at a glance, what's waiting for a **Render** (approval) and what's approved and waiting for a **Build**, across three apps: Vocal Sessions, Suki and ivanc.digital.
 
@@ -18,14 +18,35 @@ Nothing is copied in by hand. Every time the page opens, when Refresh is tapped,
 
 It reads the raw files first. If they can't be reached and the page is running inside Claude, it tries a GitHub connector instead. If one file fails, only that spot shows "Couldn't load … Retry".
 
-- **Queues:** only the markdown table is read; the prose around it is ignored. Vocal Sessions' "Earlier working names" column is hidden.
+- **Queues:** the markdown table and the `## Release order` list are read; the other prose is ignored. Vocal Sessions' "Earlier working names" column is hidden.
 - **Changelogs:** Vocal Sessions and Suki versions start `## 3.50 · 3 Nov 2026` with an italic headline underneath. ivanc.digital versions start `## 0.2.31 - 2026-10-24`; the first bullet, shortened, is the headline. Versions are compared number by number (2.10 is newer than 2.9).
+
+## The release order
+
+Each app's `RENDER_QUEUE.md` keeps the order to build in, as a short list. Names come from the queue table, so each line only needs the ID and a reason; "needs Q##" in the reason (one or more IDs) is what the page reads.
+
+```
+## Release order
+1. Q40 — touches the whole stylesheet, so first
+2. Q37 — brings the pitch listener
+3. Q38 — needs Q37
+
+### Any time
+- Q31 — tooling, no app version
+- Q35 — needs Q31
+```
+
+- **Ready:** Approved, and everything it needs has shipped. Otherwise it shows **Waits for Q##**, or its own status if it isn't approved yet.
+- **Next build** and **Up next** take the first Ready item (the numbered list first, then Any time). An app with no list works as before: the first Approved row.
+- **Order check** (only when something's wrong): an item above something it needs, an Approved item missing from the list, a shipped item still listed, an ID that isn't in the table, or a line the page can't read.
+- Render places an item in the list and the Build that ships it removes it; each app's queue says so at the top.
 
 ## What's on the page
 
 - **Top bar:** Checked time, Refresh, Mark all seen.
+- **Up next:** each app's next build (the first Ready item in its release order), with Copy build. Tapping a row goes to that app and highlights it.
 - **Needs you:** awaiting your Render, and approved, awaiting Build, with a per-app breakdown. Tapping a tile goes to that app and highlights those items; tapping again moves on to the next app that has some. A small line shows anything Building.
-- **App cards:** last shipped, Next build (with Copy build), the render queue in groups (Building, Approved, Awaiting Render, Blocked), a collapsed Shipped list sorted by version, the latest 5 changelog versions (tap to read the notes, Show all for the rest), and an "Out of step" note only when the queue and changelog disagree.
+- **App cards:** last shipped, Next build (with Copy build), the release order (numbered, then Any time, a "Not in the order" line, and an Order check only when needed), the render queue in groups (Building, Approved, Awaiting Render, Blocked), a collapsed Shipped list sorted by version, the latest 5 changelog versions (tap to read the notes, Show all for the rest), and an "Out of step" note only when the queue and changelog disagree.
 - **Copy buttons** copy e.g. `Vocal Sessions Q07 Render` or `Suki Q18 Build`.
 - **New since last visit:** a dot on new changelog versions and on queue items whose status changed. Remembered on this device only. Mark all seen clears them.
 
