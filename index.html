@@ -24,6 +24,8 @@
   --pill-red-bg:rgba(255,59,48,.13);--pill-red:#c9271e;
   --pill-grey-bg:rgba(118,118,128,.12);--pill-grey:#6c6c72;
   --flash:rgba(0,122,255,.16);
+  --size-1:#639922;--size-2:#9AA61E;--size-3:#EF9F27;--size-4:#D85A30;--size-5:#E24B4A;--size-off:rgba(60,60,67,.2);
+  --outline:rgba(60,60,67,.29);
   --glass:rgba(248,248,248,.53);--glass-blur:14px;--glass-sat:210%;
   --hair:rgba(0,0,0,.12);
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
@@ -41,6 +43,7 @@
   --pill-red-bg:rgba(255,69,58,.2);--pill-red:#ff6961;
   --pill-grey-bg:rgba(118,118,128,.24);--pill-grey:#98989f;
   --flash:rgba(10,132,255,.28);
+  --size-off:rgba(235,235,245,.2);--outline:rgba(235,235,245,.3);
   --glass:rgba(30,30,32,.6);--glass-sat:140%;--hair:rgba(255,255,255,.12);
 }}
 *{box-sizing:border-box}
@@ -178,6 +181,25 @@ button.chip{cursor:pointer}
 .olist+.group-h{margin-top:12px}
 .nio{font-size:13px;color:var(--fg2);margin:8px 2px 0;line-height:1.35}
 .order-check{margin-top:10px}
+.orow[data-orow]{cursor:pointer}
+.order-requires{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:5px;font-size:13px;color:var(--fg2);line-height:1.35}
+.req{font-size:12px;font-weight:600;padding:2px 6px;border-radius:var(--r-chip);background:var(--pill-grey-bg);color:var(--pill-grey);white-space:nowrap;display:inline-flex;align-items:center;gap:3px;line-height:1.35}
+.req.done{background:var(--pill-blue-bg);color:var(--pill-blue)}
+.req svg{width:11px;height:11px}
+.omain .order-desc{margin-top:4px}
+.order-approved{display:inline-block;margin-top:6px;font-size:12px;color:var(--fg2);padding:1px 6px;border-radius:var(--r-chip);box-shadow:inset 0 0 0 1px var(--outline);line-height:1.35;white-space:nowrap}
+
+/* Size ring */
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto}
+.size-ring{display:block;width:16px;height:16px}
+.size-ring svg{display:block;width:16px;height:16px;fill:none;stroke-width:3}
+.size-ring .on{stroke:var(--c)}
+.size-ring .off{stroke:var(--size-off)}
+
+/* Press and hold to copy */
+.hold-copy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:opacity .38s ease-out .12s,transform .38s ease-out .12s,background .2s}
+.hold-copy:not(.holding){transition-duration:.15s;transition-delay:0s}
+.hold-copy.holding{opacity:.55;transform:scale(.98)}
 
 /* Changelog timeline */
 .tl{position:relative;margin:0;padding:0;list-style:none}
@@ -242,6 +264,7 @@ button.chip{cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.15s!important;animation-duration:.01s!important}
   .flash{animation:none;background:var(--flash)}
+  .hold-copy.holding{transform:none}
 }
 </style>
 </head>
@@ -288,6 +311,8 @@ const STORE='renderQueues.v1';
 const NEW_VISIT_AFTER=15*60*1000;   // back after 15 min away counts as a new visit
 const GROUPS=[['building','Building'],['approved','Approved — awaiting Build'],['render','Awaiting Render'],['blocked','Blocked'],['other','Other']];
 const PILL={building:'Building',approved:'Approved',render:'Awaiting Render',blocked:'Blocked',shipped:'Shipped',retired:'Retired'};
+const SIZES=['Light','Light to medium','Medium','Medium to heavy','Heavy']; // size ring steps 1 to 5
+const HOLD_MS=500;                  // press and hold to copy
 const isDesktop=()=>matchMedia('(min-width:900px)').matches;
 
 /* ---------- State ---------- */
@@ -336,6 +361,19 @@ function plainMd(s){return String(s).replace(/`([^`]+)`/g,'$1').replace(/\[([^\]
 const chip=(id,tap)=>tap?`<button class="chip" data-qtap="${esc(id)}" aria-label="Show ${esc(id)} in the queue">${esc(id)}</button>`:`<span class="chip">${esc(id)}</span>`;
 const ICON_COPY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>';
 const ICON_CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const ICON_TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+// Size ring: five arcs clockwise from the top, a small gap between each.
+const RING_ARCS=(()=>{const c=8,r=6,gap=14,out=[];const pt=a=>{const t=(a-90)*Math.PI/180;return(c+r*Math.cos(t)).toFixed(2)+' '+(c+r*Math.sin(t)).toFixed(2)};
+  for(let k=0;k<5;k++){const a0=k*72+gap/2,a1=(k+1)*72-gap/2;out.push(`M${pt(a0)}A${r} ${r} 0 0 1 ${pt(a1)}`)}return out})();
+function parseSize(raw){
+  const s=String(raw||'').toLowerCase().replace(/[*_`.]/g,'').replace(/\s*[–—-]\s*/g,' to ').replace(/\s+/g,' ').trim();
+  const n=SIZES.findIndex(x=>x.toLowerCase()===s);return n<0?0:n+1;
+}
+function ring(n){
+  if(!n)return'';const word=SIZES[n-1];
+  return`<span class="size-ring" role="img" aria-label="Size: ${word.toLowerCase()}" title="${word}" style="--c:var(--size-${n})" data-name="size-ring"><svg viewBox="0 0 16 16" aria-hidden="true">${RING_ARCS.map((d,k)=>`<path class="${k<n?'on':'off'}" d="${d}"/>`).join('')}</svg></span>`;
+}
+const side=(p,n)=>`<div class="side">${p}${ring(n)}</div>`;
 const ICON_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>';
 
 /* ---------- Reading the queue ---------- */
@@ -362,14 +400,14 @@ function parseQueue(md){
     if(/^\s*\|/.test(lines[i])&&i+1<lines.length&&/^\s*\|?\s*:?-{2,}/.test(lines[i+1])){
       const head=splitRow(lines[i]).map(h=>h.toLowerCase());
       const col=re=>head.findIndex(h=>re.test(h));
-      const ci={id:col(/^(queue\s*)?id$/),name:col(/standard name|^item$|^name$/),status:col(/^(status|state)$/),proto:col(/prototype/),notes:col(/^notes$/)};
+      const ci={id:col(/^(queue\s*)?id$/),name:col(/standard name|^item$|^name$/),status:col(/^(status|state)$/),proto:col(/prototype/),notes:col(/^notes$/),size:col(/^size$/)};
       if(ci.id>=0&&ci.status>=0){
         const items=[];let j=i+2;
         for(;j<lines.length&&/^\s*\|/.test(lines[j]);j++){
           const c=splitRow(lines[j]);const id=(c[ci.id]||'').replace(/\*/g,'').trim();if(!id)continue;
           const statusRaw=c[ci.status]||'';const st=parseStatus(statusRaw);
           let proto=null;if(ci.proto>=0){const m=(c[ci.proto]||'').match(/\[([^\]]+)\]\((https?:[^)\s]+)\)/);if(m)proto=m[2]}
-          items.push({id,name:c[ci.name>=0?ci.name:ci.id+1]||'',statusRaw:statusRaw.trim(),...st,notes:ci.notes>=0?(c[ci.notes]||''):'',proto,order:items.length});
+          items.push({id,name:c[ci.name>=0?ci.name:ci.id+1]||'',statusRaw:statusRaw.trim(),...st,notes:ci.notes>=0?(c[ci.notes]||''):'',proto,size:ci.size>=0?parseSize(c[ci.size]):0,order:items.length});
         }
         return items;
       }
@@ -393,11 +431,33 @@ function parseOrder(md){
     if(!/^(\d+[.)]|[-*])\s/.test(l))continue; // prose around the list
     const m=l.match(/^(?:\d+[.)]|[-*])\s+\**(Q\d+)\**\s*(?:[—–:-]+\s*(.*))?$/i);
     if(!m){o.bad.push(l);continue}
-    const reason=(m[2]||'').trim();
-    const nm=reason.match(/needs\s+((?:Q\d+[\s,&]*(?:and\s+)?)+)/i);
-    o[part].push({id:m[1].toUpperCase(),reason,needs:nm?nm[1].match(/Q\d+/gi).map(x=>x.toUpperCase()):[]});
+    const e={id:m[1].toUpperCase(),...readReason((m[2]||'').trim())};
+    e.needs=e.requires.filter(r=>r.id).map(r=>r.id);
+    o[part].push(e);
   }
   return o;
+}
+// A reason like "needs Q41 (shipped in 3.55); the first milestone (Ivan, 4 Nov 2026)" becomes
+// requires [Q41], the description "The first milestone" and the stamp "Ivan, 04/11/26".
+function readReason(reason){
+  let r=reason,stamp='';const requires=[];const add=x=>{if(!requires.some(y=>(y.id||y.label)===(x.id||x.label)))requires.push(x)};
+  const sm=r.match(/\s*\(\s*(Ivan)\s*,\s*([^)]*)\)\s*$/i);
+  if(sm){const d=parseDate(sm[2]);if(d){stamp=sm[1]+', '+[d.getDate(),d.getMonth()+1].map(x=>String(x).padStart(2,'0')).join('/')+'/'+String(d.getFullYear()).slice(-2);r=r.slice(0,sm.index)}}
+  const parts=[];
+  r.split(';').forEach(cl=>{
+    const nm=cl.match(/\bneeds\s+(.*)$/i);
+    if(nm){
+      const what=nm[1].replace(/\([^)]*\)/g,' ').trim();
+      if(!/^nothing\b/i.test(what))what.split(/\s*(?:,|&|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean).forEach(x=>{
+        const q=x.match(/^\**(Q\d+)\**$/i);add(q?{id:q[1].toUpperCase()}:{label:x.charAt(0).toUpperCase()+x.slice(1)})});
+      cl=cl.slice(0,nm.index).replace(/[\s,]+$/,'');
+    }
+    // "(Q19 shipped as 2.25)" also names something that had to ship first
+    cl=cl.replace(/\s*\(\s*(Q\d+)\s+shipped\b[^)]*\)/gi,(_,q)=>{add({id:q.toUpperCase()});return''});
+    if(cl.trim())parts.push(cl.trim());
+  });
+  let desc=parts.join('; ');if(desc)desc=desc.charAt(0).toUpperCase()+desc.slice(1);
+  return{reason,requires,desc,stamp};
 }
 function orderInfo(d){
   const o=d.order;const byId=Object.fromEntries(d.items.map(i=>[i.id,i]));
@@ -592,7 +652,7 @@ function renderUpNext(){
     let body;
     if(d.qState==='missing'&&a.queueOptional)body=`<div class="un-none">No queue yet</div>`;
     else if(d.qState!=='ok')body=`<div class="un-none">Couldn\u2019t load the queue</div>`;
-    else if(d.next)return`<div class="un-row" role="button" tabindex="0" data-upgo="${a.key}|${esc(d.next.id)}" data-name="up-next-row"><div class="un-main">${head}<div class="un-name">${chip(d.next.id)}${inlineMd(d.next.name)}</div></div>${copyBtn(a,d.next,'build')}</div>`;
+    else if(d.next)return`<div class="un-row hold-copy" role="button" tabindex="0" data-upgo="${a.key}|${esc(d.next.id)}"${holdAttr(a,d.next)} data-name="up-next-row"><div class="un-main">${head}<div class="un-name">${chip(d.next.id)}${inlineMd(d.next.name)}</div></div>${copyBtn(a,d.next,'build')}</div>`;
     else body=`<div class="un-none">${d.counts.approved?'Nothing ready':'Nothing approved'}</div>`;
     return`<div class="un-row static" data-name="up-next-row"><div class="un-main">${head}${body}</div></div>`;
   }).join('');
@@ -615,7 +675,10 @@ function pill(i){
   if(i.kind==='other')return`<span class="pill other">${esc(i.label)}</span>`;
   return`<span class="pill ${i.kind}">${PILL[i.kind]}</span>`;
 }
-function copyBtn(app,i,kind){const label=kind==='build'?'Copy build':'Copy render';const text=`${app.name} ${i.id} ${kind==='build'?'Build':'Render'}`;return`<button class="btn" data-copy="${esc(text)}" data-name="copy-${kind}">${ICON_COPY}${label}</button>`}
+const copyLine=(app,i,kind)=>`${app.name} ${i.id} ${kind==='build'?'Build':'Render'}`;
+// Press and hold copies the same line as the Copy buttons: Build for approved items, Render for those awaiting it.
+const holdAttr=(app,i)=>i&&(i.kind==='approved'||i.kind==='render')?` data-hold="${esc(copyLine(app,i,i.kind==='approved'?'build':'render'))}"`:'';
+function copyBtn(app,i,kind){const label=kind==='build'?'Copy build':'Copy render';const text=copyLine(app,i,kind);return`<button class="btn" data-copy="${esc(text)}" data-name="copy-${kind}">${ICON_COPY}${label}</button>`}
 function row(app,i){
   const isNew=isNewItem(app.key,i);
   const sub=[];
@@ -625,7 +688,8 @@ function row(app,i){
   if(i.kind==='approved')acts.push(copyBtn(app,i,'build'));
   if(i.kind==='render')acts.push(copyBtn(app,i,'render'));
   if(i.proto)acts.push(`<a class="btn" href="${esc(i.proto)}" target="_blank" rel="noopener">Prototype</a>`);
-  return`<div class="row" data-qid="${esc(i.id)}" data-kind="${i.kind}"><div class="row-top">${isNew?'<span class="newdot" title="Changed since your last visit"></span>':''}<div class="row-name">${chip(i.id)}${inlineMd(i.name)}</div>${pill(i)}</div>${sub.join('')}${acts.length?`<div class="row-actions">${acts.join('')}</div>`:''}</div>`;
+  const hold=holdAttr(app,i);const size=['approved','render','building'].includes(i.kind)?i.size:0;
+  return`<div class="row${hold?' hold-copy':''}" data-qid="${esc(i.id)}" data-kind="${i.kind}"${hold}><div class="row-top">${isNew?'<span class="newdot" title="Changed since your last visit"></span>':''}<div class="row-name">${chip(i.id)}${inlineMd(i.name)}</div>${side(pill(i),size)}</div>${sub.join('')}${acts.length?`<div class="row-actions">${acts.join('')}</div>`:''}</div>`;
 }
 function queueHtml(d){
   const app=d.app,ui=S.ui[app.key];
@@ -655,17 +719,29 @@ function nextHtml(d){
   if(d.qState==='missing'&&app.queueOptional)return'';
   const i=d.next;
   const none=d.order&&d.counts.approved?'Nothing ready':'Nothing approved';
-  const body=d.qState!=='ok'?`<div class="nothing">–</div>`:i?`<div class="next" data-qid="${esc(i.id)}"><div class="next-top"><div class="next-name">${chip(i.id)}${inlineMd(i.name)}</div><span class="pill approved">Approved</span></div><div class="next-actions">${copyBtn(app,i,'build').replace('class="btn"','class="btn big"')}</div></div>`:`<div class="nothing">${none}</div>`;
+  const body=d.qState!=='ok'?`<div class="nothing">–</div>`:i?`<div class="next hold-copy" data-qid="${esc(i.id)}"${holdAttr(app,i)}><div class="next-top"><div class="next-name">${chip(i.id)}${inlineMd(i.name)}</div>${side('<span class="pill approved">Approved</span>',i.size)}</div><div class="next-actions">${copyBtn(app,i,'build').replace('class="btn"','class="btn big"')}</div></div>`:`<div class="nothing">${none}</div>`;
   return`<div class="sec" data-name="next-build"><div class="sec-h">Next build</div>${body}</div>`;
 }
 function orderHtml(d){
   const o=d.order;if(d.qState!=='ok'||!o)return'';
+  const byId=Object.fromEntries(d.items.map(i=>[i.id,i]));
+  const req=r=>{
+    if(!r.id)return`<span class="req">${esc(r.label)}</span>`;
+    const x=byId[r.id];
+    if(x&&x.kind==='shipped')return`<span class="req done">${ICON_TICK}${esc(r.id)} - shipped${x.version?' '+esc(x.version):''}</span>`;
+    if(x&&x.kind==='retired')return`<span class="req">${esc(r.id)} - retired</span>`;
+    return`<span class="req">${esc(r.id)}</span>`;
+  };
   const orow=(e,n)=>{const it=e.item;let p;
     if(!it)p=`<span class="pill other">Not in the table</span>`;
     else if(e.ready)p=`<span class="pill approved">Ready</span>`;
-    else if(it.kind==='approved'&&e.waits.length)p=`<span class="pill waits">Waits for ${esc(e.waits.join(', '))}</span>`;
+    else if(it.kind==='approved'&&e.waits.length)p=`<span class="pill waits" title="Waits for ${esc(e.waits.join(', '))}">Waiting</span>`;
     else p=pill(it);
-    return`<div class="orow" data-qid="${esc(e.id)}" data-name="order-row">${n?`<span class="onum">${n}</span>`:''}<div class="omain">${chip(e.id,!!it)}${it?inlineMd(it.name):''}${e.reason?`<div class="row-sub">${inlineMd(e.reason)}</div>`:''}</div>${p}</div>`};
+    const size=it&&['approved','render','building'].includes(it.kind)?it.size:0;const hold=holdAttr(d.app,it);
+    const body=(e.requires.length?`<div class="order-requires" data-name="order-requires"><span>Requires</span>${e.requires.map(req).join('')}</div>`:'')
+      +(e.desc?`<div class="row-sub clamp order-desc" data-clamp data-name="order-desc">${inlineMd(e.desc)}</div>`:'')
+      +(e.stamp?`<div><span class="order-approved" data-name="order-approved" title="Approved by ${esc(e.stamp)}">${esc(e.stamp)}</span></div>`:'');
+    return`<div class="orow${hold?' hold-copy':''}" data-qid="${esc(e.id)}"${e.desc?' data-orow':''}${hold} data-name="order-row">${n?`<span class="onum">${n}</span>`:''}<div class="omain">${chip(e.id,!!it)}${it?inlineMd(it.name):''}${body}</div>${side(p,size)}</div>`};
   let h=`<section class="sec" data-name="release-order"><div class="sec-h">Release order</div>`;
   h+=o.main.length?`<div class="olist">${o.main.map((e,k)=>orow(e,k+1)).join('')}</div>`:`<div class="nothing">Nothing in the order</div>`;
   if(o.any.length)h+=`<div class="group-h">Any time</div><div class="olist">${o.any.map(e=>orow(e,0)).join('')}</div>`;
@@ -778,13 +854,13 @@ async function copyText(text,btn){
   let ok=false;
   try{await navigator.clipboard.writeText(text);ok=true}catch(e){}
   if(!ok){try{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,text.length);ok=document.execCommand('copy');ta.remove()}catch(e){}}
-  if(ok){const old=btn.innerHTML;btn.classList.add('done');btn.innerHTML='Copied';toast('Copied “'+text+'”');setTimeout(()=>{btn.classList.remove('done');btn.innerHTML=old},1500)}
+  if(ok){toast('Copied "'+text+'"');if(btn){const old=btn.innerHTML;btn.classList.add('done');btn.innerHTML='Copied';setTimeout(()=>{btn.classList.remove('done');btn.innerHTML=old},1500)}}
   else toast('Couldn’t copy: '+text);
 }
 
 /* ---------- Taps ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('button,[data-ver],[data-clamp],[data-upgo]');if(!t)return;
+  const t=e.target.closest('button,[data-ver],[data-clamp],[data-upgo],[data-orow]');if(!t)return;
   if(t.id==='refresh')return void refreshAll();
   if(t.id==='markseen'){saveSnapshot();startVisit();render();return}
   if(t.dataset.copy)return void copyText(t.dataset.copy,t);
@@ -797,8 +873,34 @@ document.addEventListener('click',e=>{
   if(t.dataset.retry){const[k,f]=t.dataset.retry.split('|');t.textContent='Loading…';return void retryFile(k,f)}
   if(t.dataset.ver){const[k,v]=t.dataset.ver.split('|');const o=S.ui[k].open;o.has(v)?o.delete(v):o.add(v);return void rerenderKeep()}
   if(t.hasAttribute('data-clamp')){t.classList.toggle('clamp');return}
+  if(t.hasAttribute('data-orow')){const x=t.querySelector('[data-clamp]');if(x)x.classList.toggle('clamp');return}
 });
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-ver],[data-upgo]')){e.preventDefault();e.target.click()}});
+/* ---------- Press and hold to copy ---------- */
+// Hold a row for 0.5 s, then lift: it copies the row's Build (or Render) line.
+// The copy runs on lift, because Safari only allows copying while handling a touch.
+let hold=null,swallowClick=false;
+function cancelHold(){if(!hold)return;clearTimeout(hold.t);hold.el.classList.remove('holding');hold=null}
+document.addEventListener('pointerdown',e=>{
+  cancelHold();if(e.button>0||!e.isPrimary)return;
+  const el=e.target.closest('[data-hold]');if(!el)return;
+  const own=e.target.closest('button,a');if(own&&own!==el)return; // buttons and links inside keep their own tap
+  hold={el,x:e.clientX,y:e.clientY,id:e.pointerId,ready:false};el.classList.add('holding');
+  hold.t=setTimeout(()=>{if(hold)hold.ready=true},HOLD_MS);
+});
+document.addEventListener('pointermove',e=>{if(hold&&e.pointerId===hold.id&&Math.hypot(e.clientX-hold.x,e.clientY-hold.y)>10)cancelHold()},{passive:true});
+function liftHold(){
+  if(!hold)return;const h=hold;cancelHold();if(!h.ready)return;
+  swallowClick=true;setTimeout(()=>{swallowClick=false},500);copyText(h.el.dataset.hold);
+}
+// Touch: touchend does the copy (it counts as a tap everywhere); pointerup is only a fallback.
+document.addEventListener('pointerup',e=>{if(!hold||e.pointerId!==hold.id)return;if(e.pointerType==='touch')setTimeout(liftHold,80);else liftHold()});
+document.addEventListener('touchend',liftHold);
+document.addEventListener('pointercancel',cancelHold);
+addEventListener('scroll',cancelHold,{passive:true,capture:true});
+document.addEventListener('click',e=>{if(swallowClick){swallowClick=false;e.preventDefault();e.stopPropagation()}},true);
+document.addEventListener('contextmenu',e=>{if(e.target.closest('[data-hold]')&&(hold||swallowClick))e.preventDefault()});
+
 function rerenderKeep(){const y=scrollY;renderCards();renderSwitch();scrollTo(0,y)}
 
 /* ---------- Top bar soft edge, no zoom ---------- */

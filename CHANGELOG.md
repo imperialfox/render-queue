@@ -2,6 +2,13 @@
 
 All notable changes to Render queues. Newest first.
 
+## 1.2.0 · 4 Nov 2026
+*Size ring, order rows and hold to copy*
+
+- A size ring under the status pill shows how big each approved or waiting build is, in five steps from Light (green) to Heavy (red), read from a new `Size` column in each app's queue. On Release order rows, the Approved, Awaiting Render and Building rows, and Next build. No size, no ring.
+- Release order rows are easier to read: the name, a **Requires** line (shipped items in blue with a tick and their version, the rest grey), a short description, and a small "Ivan, 04/11/26" chip for when it was approved. The pill now reads **Ready** or **Waiting**.
+- Press and hold a row for half a second to copy its Build line (or Render line), with a "Copied" message. Works on Release order, Approved and Awaiting Render rows, Next build and Up next. The Copy buttons stay.
+
 ## 1.1.0 · 3 Nov 2026
 *Release order*
 

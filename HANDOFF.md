@@ -8,10 +8,10 @@ Kept here so they aren't lost. None is planned or approved; each needs a Bluepri
 
 - **Kit builds on the page (4 Nov 2026).** Kits (`imperialfox/parts-kit`, `atlas-kit`, `prototype-kit`) have no `RENDER_QUEUE.md`, so a kit version that must come before an app item never shows in Up next or Next build. Example: parts kit 1.1 had to ship before Vocal Sessions' Q41, but Up next showed Q38. One way: also read each kit's `HANDOFF.md` (its Render and Build stamps) and show approved kit versions, with "needs" lines in an app's Release order able to name them. Ivan: "add that as an idea so it doesnt get lost."
 
-## Next version · Size ring, order rows and hold to copy
+## 1.2.0 · Size ring, order rows and hold to copy
 
 **Render:** 4 Nov 2026, 19:24. Ivan: "render", for the Blueprint (Ivan's project note `render_queues_size_chip_blueprint.md`, parts 1 to 3) with every *Default if unanswered*, as one Build.
-**Build:** awaiting. The version is settled when it lands (Build receipts and *1.2 · Run together* are also waiting).
+**Build:** 4 Nov 2026, 19:27. Ivan: "Build for the size ring, order rows and hold to copy". Shipped as **1.2.0**.
 
 **Goal:** see each build's size at a glance, read the Release order faster, and copy a Build line with one press and hold.
 
@@ -31,10 +31,24 @@ Kept here so they aren't lost. None is planned or approved; each needs a Bluepri
 
 **Effort guess:** Medium.
 
+### Debrief
+
+- **Built in order:** Vocal Sessions `RENDER_QUEUE.md` (Size column, starting sizes, the Render rule) and `.agents/skills/render-approval/SKILL.md` (same step and check) in `db2666b`; Suki `RENDER_QUEUE.md` (Size column, starting sizes, Render rule, the two stamps) in `e2fb93e`; then this repo's `index.html`, `README.md`, `CHANGELOG.md` and this file.
+- **Decided within scope:**
+  - The reader now takes IDs from the whole "needs …" part. Before, "needs parts kit 1.2 and Q44" read as needing nothing, so Q45 showed Ready; it now shows Waiting (for Q44). Only IDs decide Ready, as in 1.1; a kit name shows as a grey chip and doesn't hold an item back.
+  - Suki's Q20 line says "(Q19 shipped as 2.25)" rather than "needs Q19". The reader counts a "(Q## shipped …)" note as a Requires, so the line kept its wording and only gained the stamp.
+  - A tap anywhere on an order row opens its description, not only on the text.
+  - The copy message uses straight quotes, `Copied "…"`, for the Copy buttons too (it's the same message).
+  - On the iPhone the copy runs as the finger lifts (`touchend`); moving the finger more than 10 px, or scrolling, cancels the hold. Buttons and links inside a row keep their own tap.
+  - The ring uses the wireframe colours in light and dark. In light mode, amber and yellow-green are soft on the grey rows (about 2:1); the number of filled parts still reads, and the size word is there for screen readers and hover.
+- **Named parts:** `size-ring`, `order-requires`, `order-desc`, `order-approved`, and `hold-copy` (a class on every row that responds to a hold, with its line in `data-hold`). No new saved data.
+- **Checks:** `node --check`; 44 headless checks on local copies of the real queues: Q42 "Requires Q41 - shipped 3.55", Q45 two grey chips and Waiting, Suki Q20 "Q19 - shipped 2.25", every ring matching the starting sizes (none on shipped rows or Up next), the date chips, a finger hold on Q42 copying "Vocal Sessions Q42 Build" with the toast, a hold on Suki's Up next row copying "Suki Q20 Build" without switching card, a short tap opening the description without copying, a moving finger cancelling, a mouse hold on the Mac, and a copy with a blank Size, an unreadable Size and no stamp showing nothing extra. Screenshots at 390 and 375 wide (light and dark) and Mac 1440 × 900: no sideways scroll, no console errors beyond ivanc's expected 404.
+- **Left for later:** Vocal Sessions' Q07 (status "Not scheduled") shows in the "Not in the order" line, as it has since 1.1. Not changed here.
+
 ## Next version · Build receipts
 
 **Render:** 3 Nov 2026, 18:38. Ivan: "Go ahead with both of them, render", for part B of the Blueprint (Ivan's project note `build_receipts_blueprint.md`) with every *Default if unanswered*. Part A (his `ivan-app-style` skill) has its own Build outside this repo.
-**Build:** awaiting. The version is settled when it lands: 1.2.0 if it ships before *1.2 · Run together* (Blueprint, not yet rendered), otherwise 1.3.0.
+**Build:** awaiting. The version is settled when it lands: the next free 1.x (1.2.0 went to the size ring, order rows and hold to copy).
 
 **Goal:** every queue Build leaves a receipt of what it cost, and each app card shows them, so guesses at Render can be checked against what builds really took.
 

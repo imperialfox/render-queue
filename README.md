@@ -1,8 +1,8 @@
 # Render queues
 
-![version](https://img.shields.io/badge/version-1.1.0-blue)
+![version](https://img.shields.io/badge/version-1.2.0-blue)
 
-**Current version:** 1.1.0 · see the [changelog](CHANGELOG.md).
+**Current version:** 1.2.0 · see the [changelog](CHANGELOG.md).
 
 One page that shows, at a glance, what's waiting for a **Render** (approval) and what's approved and waiting for a **Build**, across three apps: Vocal Sessions, Suki and ivanc.digital.
 
@@ -18,25 +18,26 @@ Nothing is copied in by hand. Every time the page opens, when Refresh is tapped,
 
 It reads the raw files first. If they can't be reached and the page is running inside Claude, it tries a GitHub connector instead. If one file fails, only that spot shows "Couldn't load … Retry".
 
-- **Queues:** the markdown table and the `## Release order` list are read; the other prose is ignored. Vocal Sessions' "Earlier working names" column is hidden.
+- **Queues:** the markdown table (including its `Size` column) and the `## Release order` list are read; the other prose is ignored. Vocal Sessions' "Earlier working names" column is hidden.
 - **Changelogs:** Vocal Sessions and Suki versions start `## 3.50 · 3 Nov 2026` with an italic headline underneath. ivanc.digital versions start `## 0.2.31 - 2026-10-24`; the first bullet, shortened, is the headline. Versions are compared number by number (2.10 is newer than 2.9).
 
 ## The release order
 
-Each app's `RENDER_QUEUE.md` keeps the order to build in, as a short list. Names come from the queue table, so each line only needs the ID and a reason; "needs Q##" in the reason (one or more IDs) is what the page reads.
+Each app's `RENDER_QUEUE.md` keeps the order to build in, as a short list. Names come from the queue table, so each line only needs the ID, a reason and the approval stamp. "needs …" in the reason is what the page reads (the IDs decide Ready; anything else, such as a kit version, shows as a grey chip), and so is "(Q19 shipped as 2.25)".
 
 ```
 ## Release order
-1. Q40 — touches the whole stylesheet, so first
-2. Q37 — brings the pitch listener
-3. Q38 — needs Q37
+1. Q40 — touches the whole stylesheet, so first (Ivan, 3 Nov 2026)
+2. Q37 — brings the pitch listener (Ivan, 3 Nov 2026)
+3. Q38 — needs Q37; bridge-aware patterns (Ivan, 3 Nov 2026)
 
 ### Any time
 - Q31 — tooling, no app version
 - Q35 — needs Q31
 ```
 
-- **Ready:** Approved, and everything it needs has shipped. Otherwise it shows **Waits for Q##**, or its own status if it isn't approved yet.
+- **Each row:** the ID and name; a **Requires** line when the reason names something (shipped items as a blue chip with a tick, e.g. "Q41 - shipped 3.55", the rest grey); the description (the reason without its "needs" part and stamp; two lines, tap the row for the rest); and an outlined chip "Ivan, 04/11/26" from the stamp. A line with no stamp shows no chip.
+- **Ready** or **Waiting:** Ready is Approved, and every ID it needs has shipped. Otherwise **Waiting**, or its own status if it isn't approved yet. The size ring sits under it.
 - **Next build** and **Up next** take the first Ready item (the numbered list first, then Any time). An app with no list works as before: the first Approved row.
 - **Order check** (only when something's wrong): an item above something it needs, an Approved item missing from the list, a shipped item still listed, an ID that isn't in the table, or a line the page can't read.
 - Render places an item in the list and the Build that ships it removes it; each app's queue says so at the top.
@@ -47,7 +48,9 @@ Each app's `RENDER_QUEUE.md` keeps the order to build in, as a short list. Names
 - **Up next:** each app's next build (the first Ready item in its release order), with Copy build. Tapping a row goes to that app and highlights it.
 - **Needs you:** awaiting your Render, and approved, awaiting Build, with a per-app breakdown. Tapping a tile goes to that app and highlights those items; tapping again moves on to the next app that has some. A small line shows anything Building.
 - **App cards:** last shipped, Next build (with Copy build), the release order (numbered, then Any time, a "Not in the order" line, and an Order check only when needed), the render queue in groups (Building, Approved, Awaiting Render, Blocked), a collapsed Shipped list sorted by version, the latest 5 changelog versions (tap to read the notes, Show all for the rest), and an "Out of step" note only when the queue and changelog disagree.
+- **Size ring:** a small five-part ring under the status pill on Release order rows, Approved, Awaiting Render and Building rows, and Next build. One part per step from the queue's `Size` column: Light (green), Light to medium, Medium (amber), Medium to heavy, Heavy (red, all five). A blank or unknown size shows no ring. Screen readers say "Size: medium"; on the Mac, resting the pointer on it shows the word.
 - **Copy buttons** copy e.g. `Vocal Sessions Q07 Render` or `Suki Q18 Build`.
+- **Press and hold** (half a second) a Release order row, an Approved or Awaiting Render row, Next build or an Up next row to copy the same line, with a "Copied" message. The row dims while held and the copy happens when you lift your finger. Building, Blocked and Shipped rows don't respond. A short tap works as before.
 - **New since last visit:** a dot on new changelog versions and on queue items whose status changed. Remembered on this device only. Mark all seen clears them.
 
 ### Layouts
