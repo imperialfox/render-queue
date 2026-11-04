@@ -8,6 +8,29 @@ Kept here so they aren't lost. None is planned or approved; each needs a Bluepri
 
 - **Kit builds on the page (4 Nov 2026).** Kits (`imperialfox/parts-kit`, `atlas-kit`, `prototype-kit`) have no `RENDER_QUEUE.md`, so a kit version that must come before an app item never shows in Up next or Next build. Example: parts kit 1.1 had to ship before Vocal Sessions' Q41, but Up next showed Q38. One way: also read each kit's `HANDOFF.md` (its Render and Build stamps) and show approved kit versions, with "needs" lines in an app's Release order able to name them. Ivan: "add that as an idea so it doesnt get lost."
 
+## Next version · Size ring, order rows and hold to copy
+
+**Render:** 4 Nov 2026, 19:24. Ivan: "render", for the Blueprint (Ivan's project note `render_queues_size_chip_blueprint.md`, parts 1 to 3) with every *Default if unanswered*, as one Build.
+**Build:** awaiting. The version is settled when it lands (Build receipts and *1.2 · Run together* are also waiting).
+
+**Goal:** see each build's size at a glance, read the Release order faster, and copy a Build line with one press and hold.
+
+**Agreed**
+1. **Size ring:** a five-segment ring under the status pill, no text. Light 1 green, Light to medium 2 yellow-green, Medium 3 amber, Medium to heavy 4 orange, Heavy 5 red; filled segments take the step's colour, the rest faint grey. 16 px. Screen readers and Mac hover give the size word.
+2. **Where the ring shows:** Release order rows; Approved, Awaiting Render and Building queue rows; the Next build box.
+3. **Source:** a new `Size` column in Vocal Sessions' and Suki's `RENDER_QUEUE.md` tables (full step). Blank or unreadable means no ring, never a warning. Starting values: Vocal Sessions Q42 Heavy, Q43 Medium, Q44 Light to medium, Q45 Medium; Suki Q20 Medium, Q21 Light.
+4. **Release order rows:** ID chip and title; a **Requires** line (only when something is named): shipped items as a blue chip with a tick and "- shipped 3.55", others plain grey; the description (the reason without its "needs" part and date stamp), two lines, tap for the rest; a plain outlined chip "Ivan, DD/MM/YY" from the line's stamp. On the right, **Ready** or **Waiting**, with the ring under it.
+5. **Suki's Release order lines** (Q20, Q21) get the "(Ivan, 1 Nov 2026)" stamp. A line with no stamp shows no date chip.
+6. **Press and hold** (0.5 s) a row to copy its line, as the Copy buttons do (`Vocal Sessions Q42 Build`; Awaiting Render rows copy the Render line), with the toast `Copied "Vocal Sessions Q42 Build"`. The row dims while held; on the iPhone the copy happens on lift; text selection and the callout are off on these rows; a short tap still opens the description. Works on Release order rows, Approved and Awaiting Render rows, Next build and Up next. Copy buttons stay.
+7. Each app's Render rule gains "fill the Size column and stamp the Release order line". Documentation-only commits in the app repos, no app versions.
+8. Named parts `size-ring`, `order-requires`, `order-desc`, `order-approved`, `hold-copy`; no new saved data. Screenshot checks as 1.1, plus a headless press and hold.
+
+**Out of scope:** the Up next strip's layout, shipped rows, guess vs real from receipts, reading kit versions (so "Parts kit 1.2" stays grey), ivanc.digital, any queue item's status or scope, app code, haptics.
+
+**Done when:** the real Release orders show Q42 "Requires Q41 - shipped 3.55", Q45 with two grey chips and Q20 "Requires Q19 - shipped 2.25"; rings match the starting values; holding Q42 copies "Vocal Sessions Q42 Build" with the toast on the iPhone; blank Size or no stamp shows nothing extra; dark mode reads well; nothing else changes; live on Pages.
+
+**Effort guess:** Medium.
+
 ## Next version · Build receipts
 
 **Render:** 3 Nov 2026, 18:38. Ivan: "Go ahead with both of them, render", for part B of the Blueprint (Ivan's project note `build_receipts_blueprint.md`) with every *Default if unanswered*. Part A (his `ivan-app-style` skill) has its own Build outside this repo.
