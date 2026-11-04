@@ -2,6 +2,12 @@
 
 The dashboard belongs to no app, so its work has no queue ID. Each version gets its own **Render** (scope approved) and **Build** (go-ahead), recorded here, newest first.
 
+## Ideas (not scheduled)
+
+Kept here so they aren't lost. None is planned or approved; each needs a Blueprint and its own Render.
+
+- **Kit builds on the page (4 Nov 2026).** Kits (`imperialfox/parts-kit`, `atlas-kit`, `prototype-kit`) have no `RENDER_QUEUE.md`, so a kit version that must come before an app item never shows in Up next or Next build. Example: parts kit 1.1 had to ship before Vocal Sessions' Q41, but Up next showed Q38. One way: also read each kit's `HANDOFF.md` (its Render and Build stamps) and show approved kit versions, with "needs" lines in an app's Release order able to name them. Ivan: "add that as an idea so it doesnt get lost."
+
 ## Next version · Build receipts
 
 **Render:** 3 Nov 2026, 18:38. Ivan: "Go ahead with both of them, render", for part B of the Blueprint (Ivan's project note `build_receipts_blueprint.md`) with every *Default if unanswered*. Part A (his `ivan-app-style` skill) has its own Build outside this repo.
