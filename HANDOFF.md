@@ -43,6 +43,7 @@ Kept here so they aren't lost. None is planned or approved; each needs a Bluepri
   - The ring uses the wireframe colours in light and dark. In light mode, amber and yellow-green are soft on the grey rows (about 2:1); the number of filled parts still reads, and the size word is there for screen readers and hover.
 - **Named parts:** `size-ring`, `order-requires`, `order-desc`, `order-approved`, and `hold-copy` (a class on every row that responds to a hold, with its line in `data-hold`). No new saved data.
 - **Checks:** `node --check`; 44 headless checks on local copies of the real queues: Q42 "Requires Q41 - shipped 3.55", Q45 two grey chips and Waiting, Suki Q20 "Q19 - shipped 2.25", every ring matching the starting sizes (none on shipped rows or Up next), the date chips, a finger hold on Q42 copying "Vocal Sessions Q42 Build" with the toast, a hold on Suki's Up next row copying "Suki Q20 Build" without switching card, a short tap opening the description without copying, a moving finger cancelling, a mouse hold on the Mac, and a copy with a blank Size, an unreadable Size and no stamp showing nothing extra. Screenshots at 390 and 375 wide (light and dark) and Mac 1440 × 900: no sideways scroll, no console errors beyond ivanc's expected 404.
+- **Receipt:** 1.2.0 · Medium → Light to medium · 34 steps · 42k written · 8.3M re-read · 1 full test run (commit `4ec94f9`).
 - **Left for later:** Vocal Sessions' Q07 (status "Not scheduled") shows in the "Not in the order" line, as it has since 1.1. Not changed here.
 
 ## Next version · Build receipts
